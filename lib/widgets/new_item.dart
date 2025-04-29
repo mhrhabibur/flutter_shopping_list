@@ -1,6 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shopping_list_app/data/categories.dart';
-import 'package:shopping_list_app/model/grocery_item.dart';
+import 'package:http/http.dart' as http;
 
 class NewItem extends StatefulWidget {
   const NewItem({super.key});
@@ -16,25 +17,48 @@ class _NewItemState extends State<NewItem> {
   var _enteredQuantity = 1;
   var _selectedCategory = categories[Categories.vegetables];
 
-  void _saveItem() {
+  void _saveItem() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-      print(_enteredName);
-      print(_enteredQuantity);
-      print(_selectedCategory);
-      Navigator.of(context).pop(
-        GroceryItem(
-          id: DateTime.now().toString(),
-          name: _enteredName,
-          quantity: _enteredQuantity,
-          category: _selectedCategory!,
+      final url = Uri.https(
+        'flutter-shopping-list-d01a7-default-rtdb.firebaseio.com',
+        'shopping-list.json',
+      );
+      final responses = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'name': _enteredName,
+          'quantity': _enteredQuantity,
+          'category': _selectedCategory!.title,
+        }),
+      );
+
+      if (responses.statusCode == 200) {
+        _resetForm();
+        if (!context.mounted) {
+          return;
+        }
+        Navigator.of(context).pop();
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            responses.statusCode == 200 ? "Data saved successfully." : "Error",
+          ),
+          duration: Duration(seconds: 2),
         ),
       );
     }
   }
 
   void _resetForm() {
-    _formKey.currentState!.reset();
+    setState(() {
+      _formKey.currentState!.reset();
+      _enteredName = '';
+      _enteredQuantity = 1;
+      _selectedCategory = categories[Categories.vegetables];
+    });
   }
 
   @override
