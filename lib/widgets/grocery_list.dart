@@ -26,12 +26,11 @@ class _GroceryListState extends State<GroceryList> {
 
   void _loadItems() async {
     final url = Uri.https(
-      'lutter-shopping-list-d01a7-default-rtdb.firebaseio.com',
+      'flutter-shopping-list-d01a7-default-rtdb.firebaseio.com',
       'shopping-list.json',
     );
     final response = await http.get(url);
     if (response.statusCode >= 400) {
-      _isLoading = false;
       _error = 'Failed to fetch data from server.';
     }
     final Map<String, dynamic> itemList = json.decode(response.body);
@@ -70,10 +69,17 @@ class _GroceryListState extends State<GroceryList> {
     _loadItems();
   }
 
-  void _removeItem(GroceryItem item) {
+  void _removeItem(GroceryItem item) async {
     setState(() {
+      _isLoading = false;
       _groceryItems.remove(item);
     });
+
+    final url = Uri.https(
+      'flutter-shopping-list-d01a7-default-rtdb.firebaseio.com',
+      'shopping-list/${item.id}.json',
+    );
+    await http.delete(url);
   }
 
   @override
