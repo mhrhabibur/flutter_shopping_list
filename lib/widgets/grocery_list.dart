@@ -16,6 +16,7 @@ class GroceryList extends StatefulWidget {
 class _GroceryListState extends State<GroceryList> {
   List<GroceryItem> _groceryItems = [];
   var _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -25,12 +26,16 @@ class _GroceryListState extends State<GroceryList> {
 
   void _loadItems() async {
     final url = Uri.https(
-      'flutter-shopping-list-d01a7-default-rtdb.firebaseio.com',
+      'lutter-shopping-list-d01a7-default-rtdb.firebaseio.com',
       'shopping-list.json',
     );
     final response = await http.get(url);
+    if (response.statusCode >= 400) {
+      _isLoading = false;
+      _error = 'Failed to fetch data from server.';
+    }
     final Map<String, dynamic> itemList = json.decode(response.body);
-    final List<GroceryItem> _loadedItems = [];
+    final List<GroceryItem> loadedItems = [];
     for (final item in itemList.entries) {
       final category =
           categories.entries
@@ -39,7 +44,7 @@ class _GroceryListState extends State<GroceryList> {
                     categoryItem.value.title == item.value['category'],
               )
               .value;
-      _loadedItems.add(
+      loadedItems.add(
         GroceryItem(
           id: item.key,
           name: item.value['name'],
@@ -49,7 +54,7 @@ class _GroceryListState extends State<GroceryList> {
       );
     }
     setState(() {
-      _groceryItems = _loadedItems;
+      _groceryItems = loadedItems;
       _isLoading = true;
     });
   }
@@ -101,6 +106,9 @@ class _GroceryListState extends State<GroceryList> {
               ),
             ),
       );
+    }
+    if (_error != null) {
+      content = Center(child: Text(_error!));
     }
 
     return Scaffold(
