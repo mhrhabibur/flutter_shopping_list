@@ -12,6 +12,7 @@ class NewItem extends StatefulWidget {
 
 class _NewItemState extends State<NewItem> {
   final _formKey = GlobalKey<FormState>();
+  var _isSending = false;
 
   var _enteredName = '';
   var _enteredQuantity = 1;
@@ -20,6 +21,9 @@ class _NewItemState extends State<NewItem> {
   void _saveItem() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
+      setState(() {
+        _isSending = true;
+      });
       final url = Uri.https(
         'flutter-shopping-list-d01a7-default-rtdb.firebaseio.com',
         'shopping-list.json',
@@ -144,9 +148,22 @@ class _NewItemState extends State<NewItem> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  TextButton(onPressed: _resetForm, child: Text('Reset')),
+                  TextButton(
+                    onPressed: _isSending ? null : _resetForm,
+                    child: Text('Reset'),
+                  ),
                   SizedBox(width: 20),
-                  ElevatedButton(onPressed: _saveItem, child: Text('Add Item')),
+                  ElevatedButton(
+                    onPressed: _isSending ? null : _saveItem,
+                    child:
+                        _isSending
+                            ? SizedBox(
+                              height: 16,
+                              width: 16,
+                              child: CircularProgressIndicator(),
+                            )
+                            : Text('Add Item'),
+                  ),
                 ],
               ),
             ],
